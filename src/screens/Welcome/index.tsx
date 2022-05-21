@@ -1,7 +1,7 @@
 import { View, Text, TextInput, StyleSheet } from 'react-native';
 import React, { FC, useEffect, useState } from 'react';
 import {
-  getData,
+  clearData,
   saveData,
   welcomeSelector,
 } from 'store/reducers/welcomeReducer';
@@ -10,57 +10,61 @@ import { useAppDispatch, useAppSelector } from 'store/hooks';
 import Button from 'components/atoms/Button';
 import Spiner from 'components/atoms/Spiner';
 
-const Welcome: FC<{
+export type Navigation = {
   navigation: {
     navigate: (screenName: string) => void;
   };
-}> = ({ navigation }) => {
+};
+
+const Welcome: FC<Navigation> = ({ navigation }) => {
   const [fullName, setFullName] = useState<string>('');
   const [age, setAge] = useState<string>('');
-  const { data, info, isLoading } = useAppSelector(welcomeSelector);
+  const [asyncError, setAsyncError] = useState<any>(null);
+  const { data, isLoading } = useAppSelector(welcomeSelector);
   const dispatch = useAppDispatch();
 
   const handleSubmit = () => {
-    dispatch(saveData({ fullName, age }) as any);
+    if (fullName && age) {
+      dispatch(saveData({ fullName, age }) as any);
+      setAge('');
+      setFullName('');
+    } else {
+      setAsyncError('Please fill all fields');
+    }
   };
 
   useEffect(() => {
-    if (data || info?.length) {
+    if (data) {
+      dispatch(clearData());
       navigation.navigate(routes.details);
     }
-  }, [data, navigation, info]);
+  }, [data, dispatch, navigation]);
 
-  useEffect(() => {
-    dispatch(getData());
-  }, [dispatch]);
-
+  if (isLoading) {
+    return <Spiner />;
+  }
   return (
-    <>
-      {!isLoading && !info?.length ? (
-        <View style={styles.container}>
-          <View style={styles.innerContainer}>
-            <Text style={styles.text}>Welcome</Text>
+    <View style={styles.container}>
+      <View style={styles.innerContainer}>
+        <Text style={styles.text}>Welcome</Text>
 
-            <TextInput
-              value={fullName}
-              placeholder="full name"
-              onChangeText={setFullName}
-              style={styles.input}
-            />
-            <TextInput
-              value={age}
-              placeholder="age"
-              onChangeText={setAge}
-              style={styles.input}
-            />
+        <TextInput
+          value={fullName}
+          placeholder="full name"
+          onChangeText={setFullName}
+          style={styles.input}
+        />
+        <TextInput
+          value={age}
+          placeholder="age"
+          onChangeText={setAge}
+          style={styles.input}
+        />
 
-            <Button label="Submit" onPress={handleSubmit} />
-          </View>
-        </View>
-      ) : (
-        <Spiner />
-      )}
-    </>
+        <Button label="Submit" onPress={handleSubmit} />
+      </View>
+      {asyncError && <Text style={styles.error}>{asyncError}</Text>}
+    </View>
   );
 };
 
@@ -84,15 +88,10 @@ const styles = StyleSheet.create({
     marginBottom: 30,
     fontWeight: '500',
   },
-  btnText: {
-    color: '#fff',
-    fontWeight: '500',
-  },
-  btn: {
-    backgroundColor: '#1E90FF',
-    padding: 12,
-    alignItems: 'center',
-    borderRadius: 5,
+  error: {
+    color: 'red',
+    marginTop: 10,
+    fontSize: 12,
   },
   flex: {
     flex: 1,

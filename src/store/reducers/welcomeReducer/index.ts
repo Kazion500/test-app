@@ -43,33 +43,41 @@ const authSlice = createSlice({
       state.error = action.payload;
       state.isLoading = false;
     },
+    clearData: state => {
+      state.data = null;
+      state.error = null;
+    },
   },
 });
 
 export const saveData = (data: Detail) => async (dispatch: AppDispatch) => {
   try {
     const userData = await firestore().collection('Users').add(data);
-    console.log({ userData });
-
     dispatch(welcomeSuccess(userData));
   } catch (error) {
-    console.log('error', error);
-
     dispatch(welcomeFailed(JSON.stringify(error)));
   }
 };
 
 export const getData = () => async (dispatch: AppDispatch) => {
   try {
-    const users = (await firestore().collection('Users').get()).docs;
-    dispatch(infoSuccess(users));
+    await firestore()
+      .collection('Users')
+      .onSnapshot(({ docs }) => {
+        dispatch(infoSuccess(docs));
+      });
   } catch (error) {
     dispatch(infoFailed(JSON.stringify(error)));
   }
 };
 
-export const { welcomeFailed, welcomeSuccess, infoSuccess, infoFailed } =
-  authSlice.actions;
+export const {
+  welcomeFailed,
+  welcomeSuccess,
+  infoSuccess,
+  infoFailed,
+  clearData,
+} = authSlice.actions;
 export const welcomeSelector = (state: any): RootState['welcome'] =>
   state.welcome;
 export default authSlice.reducer;

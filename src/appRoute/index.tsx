@@ -11,7 +11,6 @@ import { authSelector, updateUser } from 'store/reducers/authReducer';
 const AppRoute = () => {
   const [initializing, setInitializing] = useState(true);
   const { user } = useAppSelector(authSelector);
-  // const [user, setUser] = useState<FirebaseAuthTypes.User | null>();
   const dispatch = useAppDispatch();
 
   const onAuthStateChanged =
