@@ -12,7 +12,7 @@
 1. clone repo:
 
    ```
-   $ git clone git remote add origin https://github.com/Kazion500/test-app.git
+   $ git clone https://github.com/Kazion500/test-app.git
    ```
 
 2. install packages:
