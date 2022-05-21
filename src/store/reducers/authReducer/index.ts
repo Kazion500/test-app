@@ -6,8 +6,7 @@ import { firebase } from '@react-native-firebase/firestore';
 
 GoogleSignin.configure({
   scopes: ['https://www.googleapis.com/auth/userinfo.profile'],
-  webClientId:
-    '921313565693-9gpu1lsv8tip1ghhsondqpgjau4tc7ag.apps.googleusercontent.com',
+  webClientId: 'webClientId',
 });
 
 interface AuthState {
@@ -85,13 +84,18 @@ export const signInWithGoogle = () => async (dispatch: AppDispatch) => {
 };
 
 export const saveFCMToken =
-  (data: { token: string }) => async (dispatch: AppDispatch) => {
+  (data: { token: string }) => async (dispatch: AppDispatch, state: any) => {
+    const user = state().auth?.user;
+    console.log('user', user?.uid);
+
     dispatch(requesting());
     try {
       const fcmToken = await firebase
         .firestore()
         .collection('fcmTokens')
-        .add(data);
+        .doc(user?.uid)
+        .set(data);
+
       dispatch(saveFcmTokenSuccess(JSON.stringify(fcmToken)));
     } catch (error) {
       dispatch(saveFcmTokenFailed(JSON.stringify(error)));

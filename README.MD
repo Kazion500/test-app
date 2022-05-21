@@ -24,4 +24,4 @@
    $ yarn android
    ```
 
-NOTE: Make sure the emulator has google play services before starting the app else authentication will not work
+NOTE: Make sure the emulator has google play services before starting the app else authentication will not work. Also make sure to add webClient id in the authReducer file.
