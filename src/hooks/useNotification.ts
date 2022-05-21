@@ -3,10 +3,10 @@ import messaging from '@react-native-firebase/messaging';
 import notifee from '@notifee/react-native';
 import { DEVICE_TOKEN, getToken, saveToken } from 'config/asyncStorage';
 import { channelId } from 'helpers';
+import { useAppDispatch } from 'store/hooks';
+import { saveFCMToken } from 'store/reducers/authReducer';
 
 export async function onMessageReceived(message: any) {
-  console.log('onMessageReceived', message);
-
   await notifee.displayNotification({
     title: message.notification.title,
     body: message.notification.body,
@@ -18,18 +18,10 @@ export async function onMessageReceived(message: any) {
 }
 
 export const useNotification = async () => {
+  const dispatch = useAppDispatch();
   useEffect(() => {
     async function requestUserPermission() {
-      const authStatus = await messaging().requestPermission();
-      const enabled =
-        authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
-        authStatus === messaging.AuthorizationStatus.PROVISIONAL;
-
-      if (enabled) {
-        console.log('Authorization status:', authStatus);
-      } else {
-        console.log('Authorization status else:', authStatus);
-      }
+      await messaging().requestPermission();
     }
 
     requestUserPermission();
@@ -38,10 +30,10 @@ export const useNotification = async () => {
   useEffect(() => {
     async function fetchToken() {
       const token = await messaging().getToken();
-      console.log('Token:', token);
       const deviceToken = await getToken(DEVICE_TOKEN);
       if (!deviceToken) {
         saveToken(DEVICE_TOKEN, token);
+        dispatch(saveFCMToken({ token }));
       }
     }
 

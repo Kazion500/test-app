@@ -2,6 +2,7 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import auth, { FirebaseAuthTypes } from '@react-native-firebase/auth';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import { AppDispatch, RootState } from 'store';
+import { firebase } from '@react-native-firebase/firestore';
 
 GoogleSignin.configure({
   scopes: ['https://www.googleapis.com/auth/userinfo.profile'],
@@ -12,21 +13,23 @@ GoogleSignin.configure({
 interface AuthState {
   user: FirebaseAuthTypes.UserCredential | any;
   error: {
-    login: any;
+    fcmToken: any;
     register: any;
     logOut: any;
   };
   isLoading: boolean;
+  fcmToken: string | null;
 }
 
 const initialState: AuthState = {
   user: null,
   isLoading: false,
   error: {
-    login: null,
+    fcmToken: null,
     register: null,
     logOut: null,
   },
+  fcmToken: null,
 };
 
 const authSlice = createSlice({
@@ -45,6 +48,17 @@ const authSlice = createSlice({
     },
     googleAuthFailed: (state, action: PayloadAction<any>) => {
       state.error.register = action.payload;
+      state.isLoading = false;
+    },
+    saveFcmTokenSuccess: (
+      state,
+      action: PayloadAction<FirebaseAuthTypes.UserCredential | any>,
+    ) => {
+      state.fcmToken = action.payload;
+      state.isLoading = false;
+    },
+    saveFcmTokenFailed: (state, action: PayloadAction<any>) => {
+      state.error.fcmToken = action.payload;
       state.isLoading = false;
     },
     updateUser: (
@@ -70,7 +84,27 @@ export const signInWithGoogle = () => async (dispatch: AppDispatch) => {
   }
 };
 
-export const { requesting, googleAuthFailed, googleAuthSuccess, updateUser } =
-  authSlice.actions;
+export const saveFCMToken =
+  (data: { token: string }) => async (dispatch: AppDispatch) => {
+    dispatch(requesting());
+    try {
+      const fcmToken = await firebase
+        .firestore()
+        .collection('fcmTokens')
+        .add(data);
+      dispatch(saveFcmTokenSuccess(JSON.stringify(fcmToken)));
+    } catch (error) {
+      dispatch(saveFcmTokenFailed(JSON.stringify(error)));
+    }
+  };
+
+export const {
+  requesting,
+  googleAuthFailed,
+  googleAuthSuccess,
+  updateUser,
+  saveFcmTokenFailed,
+  saveFcmTokenSuccess,
+} = authSlice.actions;
 export const authSelector = (state: any): RootState['auth'] => state.auth;
 export default authSlice.reducer;
